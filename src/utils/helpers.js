@@ -39,3 +39,16 @@ export const groupBy = (array, key) => {
     return result;
   }, {});
 };
+
+export const isExpired = (dateStr) => {
+  if (!dateStr) return false;
+  try {
+    const [d, m, y] = dateStr.split('/').map(Number);
+    const expiry = new Date(y, m - 1, d);
+    return expiry < new Date();
+  } catch { return false; }
+};
+
+export const isLowStock = (quantity) => {
+  return quantity < 50;
+};
