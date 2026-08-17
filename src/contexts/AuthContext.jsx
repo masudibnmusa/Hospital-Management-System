@@ -15,22 +15,41 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthChange(async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-        const userRole = await getUserRole(firebaseUser.uid);
-        setRole(userRole);
+        try {
+          // Fetch the role from your service
+          const userRole = await getUserRole(firebaseUser.uid);
+          setRole(userRole);
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          // Fallback if role fetch fails (optional)
+          setRole('patient'); 
+        }
       } else {
         setUser(null);
         setRole(null);
       }
+      // Always set loading to false when auth state resolves
       setLoading(false);
     });
+    
     return unsubscribe;
   }, []);
 
-  const value = { user, role, loading, isAdmin: role === 'admin' };
+  const value = {
+    user,
+    role,
+    loading,
+    // Helper booleans for easy conditional rendering
+    isAdmin: role === 'admin',
+    isDoctor: role === 'doctor',
+    isPatient: role === 'patient'
+  };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {/* CRITICAL FIX: Do not render children until loading is false. 
+          This prevents routing bugs and Firestore permission errors on refresh. */}
+      {!loading && children} 
     </AuthContext.Provider>
   );
 };
