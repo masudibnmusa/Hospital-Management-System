@@ -1,60 +1,77 @@
-import { useState, useCallback } from 'react';
-import { useNotification } from '../contexts/NotificationContext.jsx';
+import { useState, useEffect } from 'react';
+import * as appointmentService from '../services/appointmentService.js';
 
-export const useFirestore = (service) => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const notify = useNotification();
+export const useAppointments = () => {
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null); // Added error state
 
-  const fetchAll = useCallback(async () => {
+  const fetchAppointments = async () => {
     setLoading(true);
+    setError(null); // Clear previous errors
+    
     try {
-      const result = await service.getAll?.() || await service.getPatients?.() || await service.getDoctors?.() || await service.getStaff?.() || await service.getMedicines?.() || await service.getAppointments?.() || await service.getBills?.();
-      setData(result || []);
-      return result || [];
-    } catch (error) {
-      notify.error('Failed to fetch data: ' + error.message);
-      return [];
+      const data = await appointmentService.getAppointments();
+      setAppointments(data);
+    } catch (err) {
+      console.error("Failed to fetch appointments:", err);
+      setError(err.message || "An error occurred while fetching appointments.");
+    } finally {
+      // THIS IS THE FIX: This runs NO MATTER WHAT (success or failure)
+      setLoading(false); 
+    }
+  };
+
+  useEffect(() => { 
+    fetchAppointments(); 
+  }, []);
+
+  const addAppointment = async (data) => {
+    try {
+      setLoading(true);
+      await appointmentService.addAppointment(data);
+      await fetchAppointments();
+    } catch (err) {
+      console.error("Failed to add appointment:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [service]);
+  };
 
-  const add = async (item) => {
+  const updateAppointment = async (id, data) => {
     try {
-      await service.add(item);
-      notify.success('Added successfully');
-      await fetchAll();
-      return true;
-    } catch (error) {
-      notify.error('Failed to add: ' + error.message);
-      return false;
+      setLoading(true);
+      await appointmentService.updateAppointment(id, data);
+      await fetchAppointments();
+    } catch (err) {
+      console.error("Failed to update appointment:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const update = async (id, item) => {
+  const deleteAppointment = async (id) => {
     try {
-      await service.update(id, item);
-      notify.success('Updated successfully');
-      await fetchAll();
-      return true;
-    } catch (error) {
-      notify.error('Failed to update: ' + error.message);
-      return false;
+      setLoading(true);
+      await appointmentService.deleteAppointment(id);
+      await fetchAppointments();
+    } catch (err) {
+      console.error("Failed to delete appointment:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const remove = async (id) => {
-    try {
-      await service.delete(id);
-      notify.success('Deleted successfully');
-      await fetchAll();
-      return true;
-    } catch (error) {
-      notify.error('Failed to delete: ' + error.message);
-      return false;
-    }
+  return { 
+    appointments, 
+    loading, 
+    error, // Return error so your UI can show it if needed
+    fetchAppointments, 
+    addAppointment, 
+    updateAppointment, 
+    deleteAppointment 
   };
-
-  return { data, loading, fetchAll, add, update, remove, setData };
 };
