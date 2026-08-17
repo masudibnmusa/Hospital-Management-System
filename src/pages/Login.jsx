@@ -34,7 +34,7 @@ const Login = () => {
           <div className="w-16 h-16 bg-hospital-600 rounded-2xl flex items-center justify-center mb-4">
             <Stethoscope size={32} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hospital Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">RK Hospital Portal</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Sign in to your account</p>
         </div>
 
@@ -46,7 +46,7 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input-field"
-              placeholder="admin@hospital.com"
+              placeholder="example@hospital.com"
               required
             />
           </div>
@@ -80,7 +80,7 @@ const Login = () => {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>Default: admin@hospital.com / admin123</p>
+          <p>Developed by Masud Ibn Musa</p>
         </div>
       </div>
     </div>
