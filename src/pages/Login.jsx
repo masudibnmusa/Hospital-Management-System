@@ -8,23 +8,36 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loading } = useAuthActions();
-  const { user } = useAuth();
+  
+  const { login, loading: actionLoading } = useAuthActions();
+  // 1. Destructure 'role' and 'loading' from useAuth
+  const { user, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already logged in
+  const isLoading = actionLoading || authLoading;
+
+  // 2. Redirect based on role once user and role are successfully loaded
   useEffect(() => {
-    if (user) {
-      navigate('/', { replace: true });
+    if (user && role && !authLoading) {
+      if (role === 'admin') {
+        navigate('/', { replace: true });
+      } else if (role === 'doctor') {
+        navigate('/doctor', { replace: true });
+      } else if (role === 'patient') {
+        navigate('/patient', { replace: true });
+      } else {
+        // Fallback just in case
+        navigate('/', { replace: true });
+      }
     }
-  }, [user, navigate]);
+  }, [user, role, authLoading, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = await login(email, password);
-    if (success) {
-      navigate('/', { replace: true });
-    }
+    // 3. Call login. We don't need to manually navigate here anymore.
+    // The login function triggers Firebase auth, which updates the AuthContext,
+    // which fetches the role, which then triggers the useEffect above to redirect.
+    await login(email, password);
   };
 
   return (
@@ -48,6 +61,7 @@ const Login = () => {
               className="input-field"
               placeholder="example@hospital.com"
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -60,11 +74,13 @@ const Login = () => {
                 className="input-field pr-10"
                 placeholder="••••••••"
                 required
+                disabled={isLoading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                disabled={isLoading}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -72,10 +88,20 @@ const Login = () => {
           </div>
           <button
             type="submit"
-            disabled={loading}
-            className="w-full btn-primary py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
+            className="w-full btn-primary py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 
